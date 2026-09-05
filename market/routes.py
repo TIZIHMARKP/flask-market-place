@@ -27,11 +27,9 @@ def market_page():
 
         if p_item_object:
             if current_user.can_purchase(p_item_object):
-
-                p_item_object.owner = current_user.id
-                current_user.budget -= p_item_object.price
-                db.session.commit()   # saving the new price in our database
-                flash(f"Congratulations. You purchased {p_item_object.name} for {p_item_object.price}", category = 'success')
+                p_item_object.buy(current_user)
+                
+                flash(f"Congratulations. You purchased {p_item_object.name} for {p_item_object.price}$", category = 'success')
             else:
                 flash(f"Unfortunately, you don't have neough money to purchase {p_item_object.name}", category = 'danger')
 
