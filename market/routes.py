@@ -4,7 +4,7 @@ from flask import render_template, redirect, url_for, flash, request
 from market.models import Item, User
 from market.forms import RegisterForm, LoginForm, PurchaseItemForm
 from market import db
-from flask_login import login_user, logout_user, login_required
+from flask_login import login_user, logout_user, login_required, current_user
 
 
 
@@ -18,10 +18,19 @@ def home_page():
 def market_page():
     purchase_form = PurchaseItemForm()
 
-    if purchase_form.validate_on_submit():
-        print(request.form.get('purchased_item'))
+    # if purchase_form.validate_on_submit():
+    #     print(request.form.get('purchased_item'))    # to know which item our user tried to purchased
 
-    items = Item.query.all()
+    if request.method == "POST":
+        purchased_item = request.form.get('purchased_item')
+        p_item_object = Item.query.filter_by(name = purchased_item).first()
+
+        if p_item_object:
+            p_item_object.owner = current_user.id
+            current_user.budget -= p_item_object.price
+            db.session.commit()   # saving the new price in our database
+            
+    items = Item.query.filter_by(owner = None )     # filtering user puchased item, to makesure its no longer idsplayed
 
     return render_template('market.html', items=items, purchase_form = purchase_form)
 
