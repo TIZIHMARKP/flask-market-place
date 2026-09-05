@@ -11,5 +11,7 @@ app.config['SECRET_KEY'] = '0576c81c967f0ed39c84704f'
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 login_manager = LoginManager(app)
+login_manager.login_view = "login_page"    # redirects users to the login page before the market page
+login_manager.login_message_category = 'info'  # blue color
 
 from market import routes

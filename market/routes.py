@@ -4,7 +4,7 @@ from flask import render_template, redirect, url_for, flash
 from market.models import Item, User
 from market.forms import RegisterForm, LoginForm
 from market import db
-from flask_login import login_user, logout_user
+from flask_login import login_user, logout_user, login_required
 
 
 
@@ -14,6 +14,7 @@ def home_page():
     return render_template('home.html')
 
 @app.route('/market')
+@login_required                # to take our users to the login page
 def market_page():
     items = Item.query.all()
     return render_template('market.html', items=items)
