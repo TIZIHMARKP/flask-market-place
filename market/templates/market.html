@@ -6,10 +6,15 @@
 
 
 {% block content %}
-    <table class="table table-hover table-dark">
+    <div class="row" style="margin-top:20px; margin-left: 20px;">
+        <div class="col-8">
+            <h2>Available Items in the Market</h2>
+            <p>Click on one of the items to start buying</p>
+            <br>
+            <table class="table table-hover table-dark">
         <thead>
             <tr>
-                <!-- Columns of table HERE -->
+                <!-- Columns of table -->
                 <th scope="col">ID</th>
                 <th scope="col">Name</th>
                 <th scope="col">Barcode</th>
@@ -19,7 +24,7 @@
         </thead>
 
         <tbody>
-            <!-- rows inside the table Here: -->
+            <!-- rows inside the table -->
              {% for item in items %}
                 <tr>
                     <td>{{ item.id }}</td>
@@ -35,4 +40,12 @@
             
         </tbody>
     </table>
+        </div>
+        <div class="col-4">
+            <h2>Owned Items</h2>
+            <p>Click on sell item to put an item back on the Market</p>
+            <br>
+        </div>
+    </div>
+    
 {% endblock %}
