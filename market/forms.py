@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import Length, EqualTo, Email, DataRequired, ValidationError
-from market.models import User
+from market.models import User, Item
 
 
 class RegisterForm(FlaskForm):     # It basically kind of gives a secondary title for our fields
@@ -35,3 +35,39 @@ class PurchaseItemForm(FlaskForm):
 
 class SellItemForm(FlaskForm):
     submit = SubmitField(label = 'Sell Item')
+
+
+class CreateItemForm(FlaskForm):
+    # Form for creating a new item in the market
+    name = StringField(label='Item Name: ', validators=[Length(min=2, max=30), DataRequired()])
+    price = StringField(label='Price: ', validators=[DataRequired()])
+    barcode = StringField(label='Barcode: ', validators=[Length(min=6, max=12), DataRequired()])
+    description = StringField(label='Description: ', validators=[Length(max=1024), DataRequired()])
+    submit = SubmitField(label='Create Item')
+
+    def validate_name(self, name_to_check):
+        # Checking if item name already exists
+        item = Item.query.filter_by(name=name_to_check.data).first()
+        if item:
+            raise ValidationError('The item name already exists. Please choose a different name.')
+
+    def validate_barcode(self, barcode_to_check):
+        # Checking if barcode already exists
+        item = Item.query.filter_by(barcode=barcode_to_check.data).first()
+        if item:
+            raise ValidationError('The barcode already exists. Please use a different barcode.')
+
+
+class UpdateItemForm(FlaskForm):
+    # Form for updating an existing item
+    name = StringField(label='Item Name: ', validators=[Length(min=2, max=30), DataRequired()])
+    price = StringField(label='Price: ', validators=[DataRequired()])
+    barcode = StringField(label='Barcode: ', validators=[Length(min=6, max=12), DataRequired()])
+    description = StringField(label='Description: ', validators=[Length(max=1024), DataRequired()])
+    submit = SubmitField(label='Update Item')
+
+
+class DeleteItemForm(FlaskForm):
+    # Form for deleting an item (simple confirmation)
+    submit = SubmitField(label='Delete Item')
+
