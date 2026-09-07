@@ -64,7 +64,8 @@ class Item(db.Model):
         db.session.commit()   # saving the new price in our database
 
     def sell(self, user):
-        user.budget = None
+        # user.budget = None
+        user.owner = None   # removing the ownership to make item available
         user.budget += self.price
         db.session.commit()
 
