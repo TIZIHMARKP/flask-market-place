@@ -12,7 +12,9 @@ class User(db.Model, UserMixin):
     email_address = db.Column(db.String(length=50), nullable=False, unique=True)
     password_hash = db.Column(db.String(length=60), nullable=False)
     budget = db.Column(db.Integer(), nullable=False, default=1000)
+    is_admin = db.Column(db.Boolean(), nullable=False, default=False) # Admin Update
     items = db.relationship('Item', backref='owned_user', lazy=True)   # Helpts to make sqlAlchemy take all the items in one shot
+
 
     @property      # adding a comma to budget at 3rd position starting from the right
     def prettier_budget(self):
@@ -40,6 +42,9 @@ class User(db.Model, UserMixin):
 
     def can_sell(self, item_obj):
         return item_obj in self.items
+
+    def is_admin_user(self):
+        return self.is_admin
 
 
 class Item(db.Model):
