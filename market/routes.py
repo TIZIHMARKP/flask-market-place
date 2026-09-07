@@ -45,26 +45,54 @@ def market_page():
                 flash(f"Unfortunately, you don't have neough money to purchase {p_item_object.name}", category = 'danger')
 
         # Sell Item logic
-        sold_item = request.form.get('sold_item')
-        s_item_object = Item.query.filter_by(name = sold_item).first()
-        if s_item_object:
-            if current_user.can_sell(s_item_object):     # can_sell method in Item models
-                s_item_object.sell(current_user)
+        # sold_item = request.form.get('sold_item')
+        # s_item_object = Item.query.filter_by(name = sold_item).first()
+        # if s_item_object:
+        #     if current_user.can_sell(s_item_object):     # can_sell method in Item models
+        #         s_item_object.sell(current_user)
 
-                flash(f"Congratulations. You sold {s_item_object.name} back to market {s_item_object.price}$", category = 'success')
+        #         flash(f"Congratulations. You sold {s_item_object.name} back to market {s_item_object.price}$", category = 'success')
 
-            else:
-                flash(f"Something went wrong with selling {s_item_object.name}", category = 'danger')
+        #     else:
+        #         flash(f"Something went wrong with selling {s_item_object.name}", category = 'danger')
 
-                pass
+        #         pass
 
+        # market/routes.py - More explicit selling logic
+
+        # Sell Item logic
+        if request.method == "POST":
+            
+            sold_item = request.form.get('sold_item')
+            s_item_object = Item.query.filter_by(name=sold_item).first()
+            
+            if s_item_object:
+                
+                print(f"Item: {s_item_object.name}, Current Owner: {s_item_object.owner}, User ID: {current_user.id}") # Debugging
+                
+                if current_user.can_sell(s_item_object):
+                    
+                    s_item_object.owner = None  # Setting owner to none directly. 
+                    current_user.budget += s_item_object.price  # Updating budget
+                    
+                    db.session.commit()
+                    
+                    # Verify the change
+                    db.session.refresh(s_item_object)
+                    print(f"After sell, Item: {s_item_object.name}, Owner: {s_item_object.owner}")
+                    
+                    flash(f"Congratulations You have sold {s_item_object.name} back to market for ${s_item_object.price}", category='success')
+                else:
+                    flash(f"Something went wrong with selling {s_item_object.name}", category='danger')
+
+    
         return redirect(url_for('market_page'))
 
 
     if request.method == "GET":         # removing the form resubmision output 
         items = Item.query.filter_by(owner = None ).all()     # filtering user puchased item, to makesure its no longer idsplayed
 
-        owned_items = Item.query.filter_by(owner = current_user.id) 
+        owned_items = Item.query.filter_by(owner = current_user.id).all() 
 
         return render_template('market.html', items=items, purchase_form = purchase_form, owned_items = owned_items, selling_form = selling_form)
 
