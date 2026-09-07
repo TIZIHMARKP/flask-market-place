@@ -38,7 +38,7 @@ class User(db.Model, UserMixin):
             return True
 
     def can_purchase(self, item_obj):
-        return self.budget == item_obj.price
+        return self.budget >= item_obj.price
 
     def can_sell(self, item_obj):
         return item_obj in self.items
