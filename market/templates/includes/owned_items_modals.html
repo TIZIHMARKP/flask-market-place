@@ -22,7 +22,7 @@
       </div>
       <div class="modal-body">
         
-        <form action="POST">
+        <form method="POST" >
             {{ selling_form.hidden_tag() }}
 
             <h4 class="text-center">
@@ -34,7 +34,7 @@
             </h6>
             <br>
             <input id="sold_item" name="sold_item" type="hidden" value="{{ owned_item.name }}">
-            {{ selling_form.submit(class="btn btn-outline-succes btn-block") }}
+            {{ selling_form.submit(class="btn btn-outline-success btn-block") }}
         </form>
       </div>
       <div class="modal-footer">
