@@ -67,6 +67,7 @@ class Item(db.Model):
         # user.budget = None
         user.owner = None   # removing the ownership to make item available
         user.budget += self.price
+        
         db.session.commit()
 
 
