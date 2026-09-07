@@ -26,6 +26,15 @@
             <li class="nav-item">
                 <a class="nav-link" href="{{ url_for('market_page') }}">Market</a>
             </li>
+
+            {% if current_user.is_authenticated and current_user.is_admin %}
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('admin_items_page') }}">
+                    <i class="fas fa-cog"></i> Admin Panel
+                </a>
+            </li>
+            {% endif %}
+
         </ul>
 
         {% if current_user.is_authenticated %}
