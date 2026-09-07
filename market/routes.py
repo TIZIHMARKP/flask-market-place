@@ -40,7 +40,7 @@ def market_page():
             if current_user.can_purchase(p_item_object):
                 p_item_object.buy(current_user)           # can buy method in Item models
                 
-                flash(f"Congratulations. You purchased {p_item_object.name} for {p_item_object.price}$", category = 'success')
+                flash(f"Congratulations you purchased {p_item_object.name} for {p_item_object.price}$", category = 'success')
             else:
                 flash(f"Unfortunately, you don't have neough money to purchase {p_item_object.name}", category = 'danger')
 
@@ -81,7 +81,7 @@ def market_page():
                     db.session.refresh(s_item_object)
                     print(f"After sell, Item: {s_item_object.name}, Owner: {s_item_object.owner}")
                     
-                    flash(f"Congratulations You have sold {s_item_object.name} back to market for ${s_item_object.price}", category='success')
+                    flash(f"Congratulations you have sold {s_item_object.name} back to market for ${s_item_object.price}", category='success')
                 else:
                     flash(f"Something went wrong with selling {s_item_object.name}", category='danger')
 
@@ -282,7 +282,7 @@ def delete_item(item_id):  # Admin route to delete an item
         item_name = item_to_delete.name
         
         if item_to_delete.owner is not None:  # checking if item is owned by someone
-            flash(f"Cannot delete '{item_name}' because it is owned by a user. Please sell it first", category='warning')
+            flash(f"You cannot delete '{item_name}' because someone purchased it. Please let the person sell it first", category='warning')
             return redirect(url_for('admin_items_page'))
         
         db.session.delete(item_to_delete)
@@ -296,3 +296,227 @@ def delete_item(item_id):  # Admin route to delete an item
     
     return redirect(url_for('admin_items_page'))
 
+
+
+# ==================== API ROUTES For Admin ====================
+
+@app.route('/api/items', methods=['GET'])
+def api_get_all_items():                   # API endpoint to get all items
+    
+    all_items = Item.query.all()
+    
+    items_list = []
+    for item in all_items:
+        items_list.append({
+            'id': item.id,
+            'name': item.name,
+            'price': item.price,
+            'barcode': item.barcode,
+            'description': item.description,
+            'owner': item.owner,
+            'owner_name': User.query.get(item.owner).username if item.owner else None
+        })
+    
+    return {'items': items_list, 'count': len(items_list)}
+
+
+@app.route('/api/items/<int:item_id>', methods=['GET'])
+def api_get_single_item(item_id):   # API endpoint to get a single item
+    
+    item = Item.query.get_or_404(item_id)
+    
+    return {
+        'id': item.id,
+        'name': item.name,
+        'price': item.price,
+        'barcode': item.barcode,
+        'description': item.description,
+        'owner': item.owner,
+        'owner_name': User.query.get(item.owner).username if item.owner else None
+    }
+
+
+@app.route('/api/items', methods=['POST'])
+@login_required
+def api_create_item():    # API endpoint to create a new item (Admin only)
+    
+    if not current_user.is_admin:   # Checking if user is admin
+        return {
+            'error': 'You are not an admin'
+        }, 403
+    
+    try:
+        data = request.get_json()
+        
+        name = data.get('name')
+        price = data.get('price')
+        barcode = data.get('barcode')
+        description = data.get('description')
+        
+        if not all([name, price, barcode, description]):
+            return {
+                'error': 'All fields are required'
+            }, 400
+        
+        # checking for duplicates in db
+        if Item.query.filter_by(name = name).first():
+            return {
+                'error': 'This item name already exists'
+            }, 400
+        
+        if Item.query.filter_by(barcode = barcode).first():
+            return {
+                'error': 'This barcode already exists'
+            }, 400
+        
+        new_item = Item(
+            name = name,
+            price = int(price),
+            barcode = barcode,
+            description = description
+        )
+        
+        db.session.add(new_item)
+        db.session.commit()
+        
+        return {
+            'message': 'Success creating item',
+            'item': {
+                'id': new_item.id,
+                'name': new_item.name,
+                'price': new_item.price,
+                'barcode': new_item.barcode,
+                'description': new_item.description
+            }
+        }, 201
+        
+    except Exception as e:
+        db.session.rollback()
+        return {
+            'error': str(e)
+        }, 500
+
+
+@app.route('/api/items/<int:item_id>', methods=['PUT'])
+@login_required
+def api_update_item(item_id):   # API endpoint to update an item (only admin can update item)
+    
+    if not current_user.is_admin:
+        return {
+            'error': 'You are not an admin'
+        }, 403
+    
+    try:
+        item = Item.query.get_or_404(item_id)
+        data = request.get_json()
+        
+        if 'name' in data:
+            # Check for duplicate name
+            existing = Item.query.filter_by(
+                name = data['name']
+            ).first()
+
+            if existing and existing.id != item_id:
+                return {'error': 'Item name already exists'}, 400
+            item.name = data['name']
+            
+        if 'price' in data:
+            item.price = int(data['price'])
+            
+        if 'barcode' in data:
+            # Check for duplicate barcode
+            existing = Item.query.filter_by(
+                barcode = data['barcode']
+            ).first()
+
+            if existing and existing.id != item_id:
+                return {
+                    'error': 'The barcode already exists'
+                }, 400
+            
+            item.barcode = data['barcode']
+            
+        if 'description' in data:
+            item.description = data['description']
+        
+        db.session.commit()
+        
+        return {
+            'message': 'Success updating item',
+            'item': {
+                'id': item.id,
+                'name': item.name,
+                'price': item.price,
+                'barcode': item.barcode,
+                'description': item.description
+            }
+        }
+        
+    except Exception as e:
+        db.session.rollback()
+        return {'error': str(e)}, 500
+
+
+@app.route('/api/items/<int:item_id>', methods=['DELETE'])
+@login_required
+def api_delete_item(item_id):   # API endpoint to delete an item (only by admin)
+    
+    if not current_user.is_admin:
+        return {
+            'error': 'You are not an admin'
+        }, 403
+    
+    try:
+        item = Item.query.get_or_404(item_id)
+        
+        if item.owner is not None:
+            return {
+                'error': 'You cannot delete item that is owned by a user'
+                }, 400
+        
+        db.session.delete(item)
+        db.session.commit()
+        
+        return {
+            'message': f'Success deleting item: {item_id}'
+        }, 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return {'error': str(e)}, 500
+
+
+@app.route('/api/login', methods=['POST'])
+def api_login():             # API endpoint for login which returns a session cookie
+    
+    data = request.get_json()
+    
+    username = data.get('username')
+    password = data.get('password')
+    
+    if not username or not password:
+        return {
+            'error': 'Username and password are required'
+        }, 400
+    
+    user = User.query.filter_by(
+        username = username
+        ).first()
+    
+    if user and user.check_password_correction(password):
+        login_user(user)
+        
+        return {
+            'message': 'Login successful',
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'is_admin': user.is_admin,
+                'budget': user.budget
+            }
+        }, 200
+    
+    else:
+        return {
+            'error': 'Invalid credentials'
+        }, 401
