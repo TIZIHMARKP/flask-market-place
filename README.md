@@ -160,4 +160,8 @@ Potential improvements for future development:
 
 ## License
 
-This project is open source and available for learning and development purposes.
+This project is open source and available for learning and development purposes
+
+---
+ Tizih Mark-PrinceWill || Tizih Mark Marko || PrinceWill
+`Last Update: 08/09/2026`
